@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Love - Lyra</title>
+    <style>
+        /* Reset básico para remover margens e garantir tela cheia */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000; /* Fundo preto puro */
+            overflow: hidden; /* Remove barras de rolagem */
+            height: 100vh;
+            width: 100vw;
+        }
+
+        canvas {
+            display: block; /* Remove o espaço extra reservado para descenders de fonte */
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="matrixCanvas"></canvas>
+
+    <script>
+        // Configuração inicial do Canvas
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Define o tamanho do canvas para ocupar a tela toda
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        // Chama o resize inicialmente e sempre que a janela mudar de tamanho
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // A frase personalizada que o usuário pediu
+        // Adicionei espaços ou mantive junto conforme o estilo Matrix geralmente é contínuo
+        // Aqui está exatamente como solicitado:
+        const phrase = "LyraTeAmoPequenaTeAmoMinhaVidaTeAmoBonecaTeAmo";
+        
+        // Configurações da chuva Matrix
+        const fontSize = 16; // Tamanho da fonte
+        const fontName = 'monospace'; // Fonte estilo terminal
+        
+        // Calcula quantas colunas cabem na tela
+        // O columns será recalculado dentro do draw se a tela mudar, 
+        // mas para performance calculamos aqui e no resize se necessário.
+        let columns = Math.floor(canvas.width / fontSize);
+        
+        // Array para guardar a posição Y de cada coluna
+        // Inicializamos com 1 para começar do topo
+        let drops = [];
+        let columnOffsets = []; // Novo array para guardar onde a frase começa em cada coluna
+        
+        function initDrops() {
+            columns = Math.floor(canvas.width / fontSize);
+            drops = [];
+            columnOffsets = [];
+            for (let i = 0; i < columns; i++) {
+                // Inicia as gotas em posições aleatórias acima da tela ou no topo
+                // para dar um efeito mais natural de "chuva" começando
+                drops[i] = Math.floor(Math.random() * -100); 
+                // Define um ponto de partida aleatório na frase para esta coluna específica
+                columnOffsets[i] = Math.floor(Math.random() * phrase.length);
+            }
+        }
+        
+        // Atualiza as gotas se a tela for redimensionada
+        window.addEventListener('resize', initDrops);
+        initDrops();
+
+        function draw() {
+            // Efeito de rastro: desenha um retângulo preto semi-transparente sobre o frame anterior
+            // O 0.05 define o quão rápido o rastro desaparece (quanto menor, maior o rastro)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Define a cor do texto e a fonte
+            ctx.fillStyle = '#0F0'; // Verde Matrix clássico
+            ctx.font = fontSize + 'px ' + fontName;
+
+            // Loop através de cada coluna
+            for (let i = 0; i < drops.length; i++) {
+                // Pega a letra correspondente na frase.
+                // Usamos o operador módulo (%) para repetir a frase infinitamente
+                // Precisamos garantir que o índice seja positivo e inteiro
+                
+                // Lógica: A posição da gota (drops[i]) + o deslocamento aleatório (columnOffsets[i])
+                // Isso faz com que cada coluna esteja em uma parte diferente da frase visualmente.
+                const rowIndex = Math.abs(Math.floor(drops[i]));
+                const charIndex = (rowIndex + columnOffsets[i]) % phrase.length;
+                const text = phrase.charAt(charIndex);
+
+                // Desenha a letra na posição X (coluna * tamanho da fonte) e Y (drops[i] * tamanho da fonte)
+                const x = i * fontSize;
+                const y = drops[i] * fontSize;
+                
+                ctx.fillText(text, x, y);
+
+                // Reseta a gota para o topo aleatoriamente depois que ela sai da tela
+                // O Math.random() > 0.975 adiciona a aleatoriedade para que não caiam todas juntas
+                if (y > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+
+                // Move a gota para baixo (incrementa a coordenada Y)
+                drops[i]++;
+            }
+        }
+
+        // Roda a animação a cada 33 milissegundos (aproximadamente 30 FPS)
+        // Ajuste esse valor para fazer a chuva cair mais rápido ou mais devagar
+        setInterval(draw, 75);
+
+    </script>
+</body>
+</html>
